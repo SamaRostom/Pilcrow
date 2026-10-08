@@ -1,4 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Pilcrow.Data;
 using Pilcrow.Dtos;
 using Pilcrow.Models;
@@ -22,18 +25,27 @@ builder.Services.AddScoped<ITemplateRenderer, StubRenderer>();
 builder.Services.AddHostedService<RenderWorker>();
 builder.Services.AddHostedService<StaleJobReaper>();
 
+builder.Services.AddSingleton<TokenService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<PilcrowDbContext>();
-    var devId = new Guid("00000000-0000-0000-0000-000000000001");
-    if (!db.Users.Any(u => u.Id == devId))
-    {
-        db.Users.Add(new User { Id = devId, Email = "dev@local", PasswordHash = "x" });
-        db.SaveChanges();
-    }
-}
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

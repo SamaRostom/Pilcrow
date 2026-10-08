@@ -8,18 +8,15 @@ using Npgsql;
 
 namespace Pilcrow.Controllers;
 
-[ApiController]
 [Route("templates")]
-public class TemplatesController(PilcrowDbContext db) : ControllerBase
-{
-    // TODO: replace with the authenticated user once auth exists.
-    private static readonly Guid DevUserId = new("00000000-0000-0000-0000-000000000001");
+public class TemplatesController(PilcrowDbContext db) : ApiControllerBase
+{    
 
     [HttpGet]
     public async Task<IEnumerable<TemplateSummary>> List()
     {
         return await db.Templates
-            .Where(t => t.UserId == DevUserId && t.DeletedAt == null)
+            .Where(t => t.UserId == UserId && t.DeletedAt == null)
             .OrderByDescending(t => t.UpdatedAt)
             .Select(t => new TemplateSummary(t.Id, t.Name, t.CurrentVersion, t.UpdatedAt))
             .ToListAsync();
@@ -29,7 +26,7 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
     public async Task<ActionResult<TemplateDetail>> Get(Guid id)
     {
         var result = await db.Templates
-            .Where(t => t.Id == id && t.UserId == DevUserId && t.DeletedAt == null)
+            .Where(t => t.Id == id && t.UserId == UserId && t.DeletedAt == null)
             .Join(db.TemplateVersions,
                   t => new { TemplateId = t.Id, Version = t.CurrentVersion },
                   v => new { TemplateId = v.TemplateId, Version = v.VersionNo },
@@ -48,7 +45,7 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
         if (string.IsNullOrWhiteSpace(req.Name))
             return BadRequest("Name is required.");
 
-        var template = new Template { UserId = DevUserId, Name = req.Name.Trim() };
+        var template = new Template { UserId = UserId, Name = req.Name.Trim() };
         var json = req.Doc.GetRawText();
 
         db.Templates.Add(template);
@@ -58,7 +55,7 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
             VersionNo   = 1,
             Doc         = JsonDocument.Parse(json),
             BlockCount  = CountBlocks(req.Doc),
-            CreatedBy   = DevUserId
+            CreatedBy   = UserId
         });
 
         try
@@ -80,7 +77,7 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
         await using var tx = await db.Database.BeginTransactionAsync();
 
         var template = await db.Templates
-            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == DevUserId && t.DeletedAt == null);
+            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == UserId && t.DeletedAt == null);
 
         if (template is null) return NotFound();
 
@@ -92,7 +89,7 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
             VersionNo   = template.CurrentVersion,
             Doc         = JsonDocument.Parse(req.Doc.GetRawText()),
             BlockCount  = CountBlocks(req.Doc),
-            CreatedBy   = DevUserId
+            CreatedBy   = UserId
         });
 
         await db.SaveChangesAsync();
@@ -106,7 +103,7 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var template = await db.Templates
-            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == DevUserId && t.DeletedAt == null);
+            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == UserId && t.DeletedAt == null);
 
         if (template is null) return NotFound();
 

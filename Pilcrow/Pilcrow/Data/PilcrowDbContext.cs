@@ -10,6 +10,7 @@ public class PilcrowDbContext(DbContextOptions<PilcrowDbContext> options)
     public DbSet<Template> Templates => Set<Template>();
     public DbSet<TemplateVersion> TemplateVersions => Set<TemplateVersion>();
     public DbSet<RenderJob> RenderJobs => Set<RenderJob>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -77,6 +78,20 @@ public class PilcrowDbContext(DbContextOptions<PilcrowDbContext> options)
 
             e.HasIndex(x => x.ExpiresAt)
              .HasFilter("result_blob_key IS NOT NULL");
+        });
+
+        b.Entity<RefreshToken>(e =>
+        {
+            e.ToTable("refresh_tokens");
+            e.Property(x => x.TokenHash).IsRequired();
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => x.UserId).HasFilter("revoked_at IS NULL");
+            e.HasOne(x => x.User).WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<RefreshToken>().WithMany()
+             .HasForeignKey(x => x.ParentId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
         
     }

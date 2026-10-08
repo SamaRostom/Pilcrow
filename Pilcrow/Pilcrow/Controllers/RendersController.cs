@@ -8,11 +8,9 @@ using System.Text.Json;
 
 namespace Pilcrow.Controllers;
 
-[ApiController]
 [Route("renders")]
-public class RendersController(PilcrowDbContext db) : ControllerBase
+public class RendersController(PilcrowDbContext db) : ApiControllerBase
 {
-    private static readonly Guid DevUserId = new("00000000-0000-0000-0000-000000000001");
 
     [HttpPost]
     public async Task<ActionResult<RenderJobAccepted>> Create(CreateRenderRequest req)
@@ -21,7 +19,7 @@ public class RendersController(PilcrowDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(req.IdempotencyKey))
         {
             var existing = await db.RenderJobs.AsNoTracking().FirstOrDefaultAsync(j =>
-                j.UserId == DevUserId && j.IdempotencyKey == req.IdempotencyKey);
+                j.UserId == UserId && j.IdempotencyKey == req.IdempotencyKey);
 
             if (existing is not null)
                 return Accepted(new RenderJobAccepted(existing.Id, existing.Status.ToString().ToLowerInvariant()));
@@ -30,7 +28,7 @@ public class RendersController(PilcrowDbContext db) : ControllerBase
         // Pin the version that is current right now, so the output stays
         // reproducible even after the template is edited.
         var version = await db.Templates
-            .Where(t => t.Id == req.TemplateId && t.UserId == DevUserId && t.DeletedAt == null)
+            .Where(t => t.Id == req.TemplateId && t.UserId == UserId && t.DeletedAt == null)
             .Join(db.TemplateVersions,
                   t => new { Id = t.Id, V = t.CurrentVersion },
                   v => new { Id = v.TemplateId, V = v.VersionNo },
@@ -41,7 +39,7 @@ public class RendersController(PilcrowDbContext db) : ControllerBase
 
         var job = new RenderJob
         {
-            UserId            = DevUserId,
+            UserId            = UserId,
             SourceType        = JobSource.Template,
             TemplateVersionId = version,
             DataPayload       = req.Data is null ? null : JsonDocument.Parse(req.Data.Value.GetRawText()),
@@ -58,7 +56,7 @@ public class RendersController(PilcrowDbContext db) : ControllerBase
     public async Task<ActionResult<RenderJobStatus>> Get(Guid id)
     {
         var job = await db.RenderJobs.AsNoTracking()
-            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == DevUserId);
+            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == UserId);
 
         if (job is null) return NotFound();
 
@@ -79,7 +77,7 @@ public class RendersController(PilcrowDbContext db) : ControllerBase
     public async Task<IActionResult> Download(Guid id, [FromServices] IBlobStore blobs)
     {
         var job = await db.RenderJobs.AsNoTracking()
-            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == DevUserId);
+            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == UserId);
 
         if (job is null || job.Status != JobStatus.Done || job.ResultBlobKey is null)
             return NotFound();
