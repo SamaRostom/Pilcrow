@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilcrow</title>
+<link rel="icon" href="/brand/appicon-teal.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- Sign in -->
+<section id="gate" class="gate" hidden>
+  <div class="gate-panel">
+    <svg class="gate-mark" viewBox="0 0 1024 1024" aria-hidden="true">
+      <rect width="1024" height="1024" rx="229" fill="#0F2E3D"/>
+      <text x="512" y="700" text-anchor="middle" font-family="Newsreader, serif" font-style="italic"
+            font-size="760" fill="#2BB3A3">&#182;</text>
+    </svg>
+    <h1 class="gate-title">Pilcrow</h1>
+    <p class="gate-sub">Design a document once. Render it with any data.</p>
+
+    <form id="gate-form" class="gate-form" novalidate>
+      <label class="field">
+        <span>Email</span>
+        <input id="gate-email" type="email" autocomplete="email" required>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input id="gate-password" type="password" autocomplete="current-password" required minlength="8">
+      </label>
+      <label class="field" id="gate-name-field" hidden>
+        <span>Name</span>
+        <input id="gate-name" type="text" autocomplete="name">
+      </label>
+
+      <p id="gate-error" class="gate-error" role="alert" hidden></p>
+
+      <button id="gate-submit" class="btn btn-primary btn-wide" type="submit">Sign in</button>
+      <button id="gate-toggle" class="btn btn-quiet btn-wide" type="button">Create an account</button>
+    </form>
+  </div>
+</section>
+
+<!-- Workbench -->
+<div id="app" class="app" hidden>
+
+  <header class="bar">
+    <div class="bar-brand">
+      <svg class="bar-mark" viewBox="0 0 1024 1024" aria-hidden="true">
+        <rect width="1024" height="1024" rx="229" fill="#0F2E3D"/>
+        <text x="512" y="700" text-anchor="middle" font-family="Newsreader, serif" font-style="italic"
+              font-size="760" fill="#2BB3A3">&#182;</text>
+      </svg>
+      <span>Pilcrow</span>
+    </div>
+
+    <div class="bar-doc">
+      <input id="doc-name" class="doc-name" type="text" placeholder="Untitled" aria-label="Template name" disabled>
+      <span id="doc-meta" class="doc-meta"></span>
+    </div>
+
+    <div class="bar-actions">
+      <button id="btn-save" class="btn btn-quiet" disabled>Save</button>
+      <button id="btn-render" class="btn btn-primary" disabled>Render PDF</button>
+      <button id="btn-signout" class="btn btn-ghost">Sign out</button>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- Templates -->
+    <aside class="rail" aria-label="Templates">
+      <div class="rail-head">
+        <h2>Templates</h2>
+        <button id="btn-new" class="btn btn-small">New</button>
+      </div>
+      <ul id="template-list" class="template-list"></ul>
+      <p id="template-empty" class="rail-empty" hidden>
+        No templates yet. Create one to start laying out a document.
+      </p>
+    </aside>
+
+    <!-- Page -->
+    <section class="stage" aria-label="Page">
+      <div id="page" class="page">
+        <div class="page-margin"></div>
+        <ol id="blocks" class="blocks"></ol>
+        <p id="page-empty" class="page-empty" hidden>
+          Add a block from the panel on the right. Blocks stack in order, so content
+          below always moves down rather than overlapping.
+        </p>
+      </div>
+    </section>
+
+    <!-- Inspector -->
+    <aside class="panel" aria-label="Blocks and data">
+      <nav class="tabs" role="tablist">
+        <button class="tab is-active" role="tab" aria-selected="true" data-tab="add">Add</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="data">Data</button>
+      </nav>
+
+      <div class="tab-body" data-panel="add">
+        <p class="panel-hint">Click to append a block.</p>
+        <div class="adders">
+          <button class="adder" data-add="heading"><b>Heading</b><span>Large title text</span></button>
+          <button class="adder" data-add="text"><b>Paragraph</b><span>Body copy</span></button>
+          <button class="adder" data-add="table"><b>Table</b><span>Rows from your data</span></button>
+          <button class="adder" data-add="divider"><b>Divider</b><span>Horizontal rule</span></button>
+          <button class="adder" data-add="spacer"><b>Spacer</b><span>Vertical gap</span></button>
+        </div>
+        <p class="panel-note">
+          Write <code>{{field}}</code> anywhere in text to pull a value from your data
+          when the document is rendered.
+        </p>
+      </div>
+
+      <div class="tab-body" data-panel="data" hidden>
+        <p class="panel-hint">Values bound at render time. JSON.</p>
+        <textarea id="data-json" class="data-json" spellcheck="false" aria-label="Render data"></textarea>
+        <p id="data-error" class="data-error" role="alert" hidden></p>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- Render progress -->
+<div id="render-sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="render-title">
+  <div class="sheet-card">
+    <h2 id="render-title" class="sheet-title">Rendering</h2>
+    <p id="render-status" class="sheet-status">Queued</p>
+    <div class="sheet-track"><div id="render-bar" class="sheet-bar"></div></div>
+    <div class="sheet-actions">
+      <button id="render-close" class="btn btn-quiet">Close</button>
+      <a id="render-download" class="btn btn-primary" hidden download>Download</a>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>
