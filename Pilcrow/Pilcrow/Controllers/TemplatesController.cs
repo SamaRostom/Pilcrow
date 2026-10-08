@@ -4,6 +4,7 @@ using Pilcrow.Data;
 using Pilcrow.Dtos;
 using Pilcrow.Models;
 using System.Text.Json;
+using Npgsql;
 
 namespace Pilcrow.Controllers;
 
@@ -60,7 +61,14 @@ public class TemplatesController(PilcrowDbContext db) : ControllerBase
             CreatedBy   = DevUserId
         });
 
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+        {
+            return Conflict($"A template named '{req.Name}' already exists.");
+        }
 
         return CreatedAtAction(nameof(Get), new { id = template.Id },
             new TemplateSummary(template.Id, template.Name, 1, template.UpdatedAt));

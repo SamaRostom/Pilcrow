@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pilcrow.Data;
@@ -12,9 +13,11 @@ using Pilcrow.Data;
 namespace Pilcrow.Migrations
 {
     [DbContext(typeof(PilcrowDbContext))]
-    partial class PilcrowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008212246_AddRenderJobs")]
+    partial class AddRenderJobs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,11 +125,11 @@ namespace Pilcrow.Migrations
 
                     b.HasIndex("LeaseExpiresAt")
                         .HasDatabaseName("ix_render_jobs_stale")
-                        .HasFilter("status = 'running'");
+                        .HasFilter("status = 'Running'");
 
                     b.HasIndex("Priority", "QueuedAt")
                         .HasDatabaseName("ix_render_jobs_claim")
-                        .HasFilter("status = 'queued'");
+                        .HasFilter("status = 'Queued'");
 
                     b.HasIndex("UserId", "IdempotencyKey")
                         .IsUnique()

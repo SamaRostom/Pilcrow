@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Pilcrow.Data;
 using Pilcrow.Dtos;
 using Pilcrow.Models;
+using Pilcrow.Services;
+using Pilcrow.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,11 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<PilcrowDbContext>(o =>
     o.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
      .UseSnakeCaseNamingConvention());
+
+builder.Services.AddSingleton<IBlobStore, LocalBlobStore>();
+builder.Services.AddScoped<ITemplateRenderer, StubRenderer>();
+builder.Services.AddHostedService<RenderWorker>();
+builder.Services.AddHostedService<StaleJobReaper>();
 
 var app = builder.Build();
 
