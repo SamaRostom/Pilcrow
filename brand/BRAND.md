@@ -13,11 +13,11 @@ Teal passes contrast against white for large text and graphics only. Never set b
 
 ## Files
 
-App icons — rounded, padded, mark centred on a square:
+App icons — rounded square, mark at 48% of the side:
 
 | File | Use |
 |---|---|
-| `appicon-teal.svg` | Primary icon. README header, app icon, favicon source |
+| `appicon-teal.svg` | Primary. README header, app icon, favicon source |
 | `appicon-ink.svg` | Dark alternative |
 
 Full-bleed logos — rounded corners, mark fills the square:
