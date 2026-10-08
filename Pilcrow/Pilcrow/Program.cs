@@ -8,6 +8,8 @@ using Pilcrow.Models;
 using Pilcrow.Services;
 using Pilcrow.Workers;
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -21,7 +23,7 @@ builder.Services.AddDbContext<PilcrowDbContext>(o =>
      .UseSnakeCaseNamingConvention());
 
 builder.Services.AddSingleton<IBlobStore, LocalBlobStore>();
-builder.Services.AddScoped<ITemplateRenderer, StubRenderer>();
+builder.Services.AddScoped<ITemplateRenderer, QuestPdfRenderer>();
 builder.Services.AddHostedService<RenderWorker>();
 builder.Services.AddHostedService<StaleJobReaper>();
 
